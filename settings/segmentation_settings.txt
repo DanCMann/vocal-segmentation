@@ -1,0 +1,9 @@
+variable	value
+amp_tipping_point	6
+pitch_tipping_point	190
+we_tipping_point	150
+amp_threshold	2
+pitch_threshold	7
+we_threshold	90
+noise_threshold	0.17
+noise_echo	1

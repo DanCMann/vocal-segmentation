@@ -1,0 +1,22 @@
+attribute	value	species
+max_species_freq  	5000	Human
+min_species_pitch  	75	Human
+voicing_threshold 	0.45	Human
+octave_cost 	0.05	Human
+octave_jump_cost 	0.45	Human
+voiced_unvoiced_cost 	0.14	Human
+pitch_ceiling 	400	Human
+max_species_freq  	10000	Budgerigar
+min_species_pitch  	400	Budgerigar
+voicing_threshold 	0.45	Budgerigar
+octave_cost 	0.04	Budgerigar
+octave_jump_cost 	0.15	Budgerigar
+voiced_unvoiced_cost 	0.04	Budgerigar
+pitch_ceiling 	10000	Budgerigar
+max_species_freq  	1000	Manually adjust settings
+min_species_pitch  	75	Manually adjust settings
+voicing_threshold 	0.45	Manually adjust settings
+octave_cost 	0.01	Manually adjust settings
+octave_jump_cost 	0.35	Manually adjust settings
+voiced_unvoiced_cost 	0.14	Manually adjust settings
+pitch_ceiling 	500	Manually adjust settings
