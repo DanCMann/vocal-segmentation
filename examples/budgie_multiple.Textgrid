@@ -1,0 +1,132 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 0.953125 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "phrase" 
+        xmin = 0 
+        xmax = 0.953125 
+        intervals: size = 5 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.14114903036290274 
+            text = "" 
+        intervals [2]:
+            xmin = 0.14114903036290274 
+            xmax = 0.26648567354104247 
+            text = "phrase" 
+        intervals [3]:
+            xmin = 0.26648567354104247 
+            xmax = 0.3421606279127495 
+            text = "" 
+        intervals [4]:
+            xmin = 0.3421606279127495 
+            xmax = 0.5415956639131857 
+            text = "phrase" 
+        intervals [5]:
+            xmin = 0.5415956639131857 
+            xmax = 0.953125 
+            text = "" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "segmentation" 
+        xmin = 0 
+        xmax = 0.953125 
+        intervals: size = 23 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.14114903036290274 
+            text = "" 
+        intervals [2]:
+            xmin = 0.14114903036290274 
+            xmax = 0.14269766356223096 
+            text = "silent" 
+        intervals [3]:
+            xmin = 0.14269766356223096 
+            xmax = 0.16001898084138474 
+            text = "1" 
+        intervals [4]:
+            xmin = 0.16001898084138474 
+            xmax = 0.16165306737715399 
+            text = "silent" 
+        intervals [5]:
+            xmin = 0.16165306737715399 
+            xmax = 0.17347976867978376 
+            text = "2" 
+        intervals [6]:
+            xmin = 0.17347976867978376 
+            xmax = 0.17960759318891834 
+            text = "silent" 
+        intervals [7]:
+            xmin = 0.17960759318891834 
+            xmax = 0.19041299040669235 
+            text = "3" 
+        intervals [8]:
+            xmin = 0.19041299040669235 
+            xmax = 0.19172025963530773 
+            text = "4" 
+        intervals [9]:
+            xmin = 0.19172025963530773 
+            xmax = 0.1955399369126683 
+            text = "5" 
+        intervals [10]:
+            xmin = 0.1955399369126683 
+            xmax = 0.20348568269284614 
+            text = "silent" 
+        intervals [11]:
+            xmin = 0.20348568269284614 
+            xmax = 0.20473167367637018 
+            text = "6" 
+        intervals [12]:
+            xmin = 0.20473167367637018 
+            xmax = 0.21753882690046147 
+            text = "7" 
+        intervals [13]:
+            xmin = 0.21753882690046147 
+            xmax = 0.21982654805053842 
+            text = "8" 
+        intervals [14]:
+            xmin = 0.21982654805053842 
+            xmax = 0.2253824422721538 
+            text = "9" 
+        intervals [15]:
+            xmin = 0.2253824422721538 
+            xmax = 0.2276701634222307 
+            text = "silent" 
+        intervals [16]:
+            xmin = 0.2276701634222307 
+            xmax = 0.22985575416382203 
+            text = "10" 
+        intervals [17]:
+            xmin = 0.22985575416382203 
+            xmax = 0.23414523132021625 
+            text = "11" 
+        intervals [18]:
+            xmin = 0.23414523132021625 
+            xmax = 0.23682104802253837 
+            text = "12" 
+        intervals [19]:
+            xmin = 0.23682104802253837 
+            xmax = 0.25436705220036043 
+            text = "13" 
+        intervals [20]:
+            xmin = 0.25436705220036043 
+            xmax = 0.2590446249089998 
+            text = "14" 
+        intervals [21]:
+            xmin = 0.2590446249089998 
+            xmax = 0.2626396152876921 
+            text = "15" 
+        intervals [22]:
+            xmin = 0.2626396152876921 
+            xmax = 0.26648567354104247 
+            text = "silent" 
+        intervals [23]:
+            xmin = 0.26648567354104247 
+            xmax = 0.953125 
+            text = "" 
