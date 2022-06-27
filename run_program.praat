@@ -34,19 +34,11 @@ form Fill attributes
 endform
 
 
-### 	Read/Create textgrid	##########################################################
-
-if textgrid = 1
-	textgrid = Read from file: textgrid_pathway$
-else
-# Create script to create empty textgrid
-#runScript: "create_segmentation_textgrid.praat", ARG1, ARG2
-
-endif
-
 
 ############################################################################################
 
+include ./scripts/create_segmentation_textgrid.praat
+include ./scripts/extract_from_textgrid.praat
 
 
 ### 	Load and manipulate settings for Segmentation	###################################
@@ -55,7 +47,7 @@ seg_settings_default = Read Table from tab-separated file: "./settings/segmentat
 
 
 if segmentation = 2
-runScript: "./scripts/adjust_segmentation_settings.praat"
+	runScript: "./scripts/adjust_segmentation_settings.praat"
 else
 	
 endif
@@ -75,7 +67,7 @@ selectObject: pitch_settings
 Rename: "pitch_settings"
 
 if species = 3
-runScript: "./scripts/adjust_pitch_settings.praat"
+	runScript: "./scripts/adjust_pitch_settings.praat"
 else
 	
 endif
@@ -84,11 +76,22 @@ endif
 
 
 
+
+
 ### Run segmentation ######################################################################
 
-include ./scripts/extract_from_textgrid.praat
 
 audio = Read from file: sound_pathway$
+
+### 	Read/Create textgrid	##########################################################
+
+if textgrid = 1
+	textgrid = Read from file: textgrid_pathway$
+else
+	@to_textgrid: audio
+	textgrid = selected("TextGrid")
+endif
+
 plusObject: textgrid
 
 @extract_from_textgrid: audio, textgrid, tier_to_segment, labels_to_segment$
