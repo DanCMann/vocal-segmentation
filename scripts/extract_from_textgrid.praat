@@ -106,7 +106,7 @@ for i.phrases from 1 to n.phrase
 		endif
 
 		if i.segments = n.intervals
-			Insert boundary: n.tiers + 1, end
+			#Insert boundary: n.tiers + 1, end
 		else
 			i.segments  = i.segments 
 		endif
