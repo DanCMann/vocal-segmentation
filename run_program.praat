@@ -30,6 +30,12 @@ form Fill attributes
 		option Budgerigar
 		option Manually adjust settings
 	comment 
+
+	comment Choose the output method
+	optionmenu Output: 1
+		option Praat view
+		option CSV file
+	sentence Output_pathway ./output/budgie_multiple.csv
     
 endform
 
@@ -39,6 +45,7 @@ endform
 
 include ./scripts/create_segmentation_textgrid.praat
 include ./scripts/extract_from_textgrid.praat
+include ./scripts/write_segments.praat
 
 
 ### 	Load and manipulate settings for Segmentation	###################################
@@ -98,10 +105,14 @@ plusObject: textgrid
 textgrid = selected("TextGrid")
 ############################################################################################
 ### 	Clean object window	 ###########################################################
-selectObject: pitch_settings
-plusObject: seg_settings_default
-Remove
-selectObject: audio
-plusObject: textgrid
-View & Edit
+if output = 1
+	selectObject: pitch_settings
+	plusObject: seg_settings_default
+	Remove
+	selectObject: audio
+	plusObject: textgrid
+	View & Edit
+else
+	@write_boundaries_to_csv: textgrid, output_pathway$
+endif
 ############################################################################################
