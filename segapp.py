@@ -43,6 +43,23 @@ class App(QtWidgets.QMainWindow):
         self.setCentralWidget(self.table_widget)
         self.show()
 
+class TabStruct(QtWidgets.QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.canvas = MplCanvas(self)
+        self.canvas.axes.contour_ax = self.canvas.axes.twinx()
+    
+
+    def define_widgets(self):
+        pass
+
+    def click_connections(self):
+        pass
+
+    def add_widgets(self):
+        pass
+
 class TableWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -359,7 +376,7 @@ class TableWidget(QtWidgets.QWidget):
         #Raise an error here if there is no filename
 
     def segment_syllable(self):
-        print("segment")
+        #print("segment")
         n_data = 10
         self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
         print(self.xdata)

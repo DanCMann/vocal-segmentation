@@ -214,14 +214,25 @@ class Syllable(parselmouth.Sound):
           that it would also plot on a noncanvas object. 
         '''
         X, Y = self.spectrogram.x_grid(), self.spectrogram.y_grid()
+        print("length of X is {}, of Y is {}".format(len(X), len(Y)))
+        print("------")
+        print(X)
+        print(Y)
+        print("-------")
+        print(self.spectrogram.values)
         sg_db = 10 * np.log10(self.spectrogram.values)
         canvas_axes.pcolormesh(
-                X, Y, sg_db, 
+                # removes last element from X and Y
+                # I'm not happywith this solution, but gouraud shading operates different from flat
+                # the dimensions of C are treated differently it seems. 
+                X[:-1], Y[:-1], sg_db, 
                 vmin=sg_db.max() - dynamic_range, 
                 facecolor = 'white',
                 edgecolors = 'face', 
-                alpha = 0.5,
-                shading='flat', 
+                #alpha = 0.5,
+                shading='gouraud',
+                #interpolate_grids=True,
+                #allmatch=True,
                 snap = True,
                 rasterized = True,
                 cmap='binary')
