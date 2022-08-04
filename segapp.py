@@ -49,7 +49,14 @@ class TabStruct(QtWidgets.QWidget):
 
         self.canvas = MplCanvas(self)
         self.canvas.axes.contour_ax = self.canvas.axes.twinx()
-    
+        
+        self.set_ui()
+
+    def set_ui(self):
+        self.add_layout()
+        self.define_widgets()
+        self.click_connections()
+        self.add_widgets()
 
     def define_widgets(self):
         pass
@@ -60,6 +67,192 @@ class TabStruct(QtWidgets.QWidget):
     def add_widgets(self):
         pass
 
+    def add_layout(self):
+        self.grid =  QtWidgets.QGridLayout(self)
+
+class MainTab(TabStruct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def define_widgets(self):
+        self.filename_text = QtWidgets.QLineEdit()
+        self.browse_button = QtWidgets.QPushButton("Browse")
+ 
+    def click_connection(self):
+        self.browse_button.clicked.connect(self.browse_file)
+    
+    def add_widgets(self):
+        self.grid.addWidget(self.browse_button, 0, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.filename_text, 0, 0, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+ 
+class AmpTab(TabStruct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def define_widgets(self):
+
+        self.amp_button = QtWidgets.QPushButton("Plot")
+        
+        self.min_pitch_label = QtWidgets.QLabel("Minimum Pitch")
+
+        self.min_pitch_slider = QtWidgets.QSlider(QtCore.Qt.Vertical)
+        self.min_pitch_slider.setMinimum(10)
+        self.min_pitch_slider.setMaximum(2000)
+        self.min_pitch_slider.setValue(400)
+        self.min_pitch_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.min_pitch_slider.setTickInterval(10)
+
+        self.amp_time_step_label = QtWidgets.QLabel("Time Step")
+
+        self.amp_time_step = QtWidgets.QDoubleSpinBox()
+        self.amp_time_step.setRange(0, 1000)
+        self.amp_time_step.setValue(0)
+        self.amp_time_step.setSingleStep(1)
+
+    def click_connections(self):
+
+        ### This will have to be changed
+        self.amp_button.clicked.connect(lambda: self.update_spectrogram(self.canvas_amp))
+        self.min_pitch_slider.valueChanged.connect(lambda: self.change_intensity(minimum_pitch = self.min_pitch_slider.value()))
+
+    def add_widgets(self):
+        self.grid.addWidget(self.canvas_amp, 0, 0, 3, 3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_button, 5, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.min_pitch_label, 0, 4, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.min_pitch_slider, 0, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_time_step_label, 1, 4, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self..grid.addWidget(self.amp_time_step, 1, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+
+class F0Tab(TabStruct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def define_widgets(self):
+        self.f0_button = QtWidgets.QPushButton("Plot")
+        '''
+        self.f0_time_step_label = QtWidgets.QLabel("Time Step")
+        self.f0_time_step = QtWidgets.QDoubleSpinBox()
+        self.f0_time_step.setRange(0, 1000) 
+        self.f0_time_step.setValue(0)
+        self.f0_time_step.setSingleStep(1)
+        '''
+        self.f0_pitch_floor_label = QtWidgets.QLabel("Pitch Floor")
+        self.f0_pitch_floor = QtWidgets.QSpinBox()
+        self.f0_pitch_floor.setRange(50, 5000)
+        self.f0_pitch_floor.setValue(500)
+        self.f0_pitch_floor.setSingleStep(10)
+       
+        self.f0_max_n_cand_label = QtWidgets.QLabel("Maximum Number of Candidates")
+        self.f0_max_n_cand = QtWidgets.QSpinBox()
+        self.f0_max_n_cand.setRange(1, 15)
+        self.f0_max_n_cand.setSingleStep(1)
+        self.f0_max_n_cand.setValue(15)
+        
+        # very accurate widget
+        
+        self.f0_sil_threshold_label = QtWidgets.QLabel("Silence Threshold")
+        self.f0_sil_threshold = QtWidgets.QDoubleSpinBox()
+        self.f0_sil_threshold.setRange(0, 10)
+        self.f0_sil_threshold.setSingleStep(0.05)
+        self.f0_sil_threshold.setValue(0.03)
+
+        self.f0_voicing_threshold_label = QtWidgets.QLabel("Voicing Threshold")
+        self.f0_voicing_threshold = QtWidgets.QDoubleSpinBox()
+        self.f0_voicing_threshold.setRange(0, 10)
+        self.f0_voicing_threshold.setSingleStep(0.1)
+        self.f0_voicing_threshold.setValue(0.45)
+        
+        self.f0_octave_cost_label = QtWidgets.QLabel("Octave Cost")
+        self.f0_octave_cost = QtWidgets.QDoubleSpinBox()
+        self.f0_octave_cost.setRange(0, 10) 
+        self.f0_octave_cost.setSingleStep(0.01) 
+        self.f0_octave_cost.setValue(0.001)
+
+        self.f0_octave_jump_cost_label = QtWidgets.QLabel("Octave Jump Cost")
+        self.f0_octave_jump_cost = QtWidgets.QDoubleSpinBox()
+        self.f0_octave_jump_cost.setRange(0, 10)
+        self.f0_octave_jump_cost.setSingleStep(0.1)
+        self.f0_octave_jump_cost.setValue(0.05)
+    
+        self.f0_voiced_unvoiced_cost_label = QtWidgets.QLabel("Voiced/Unvoiced Cost")
+        self.f0_voiced_unvoiced_cost = QtWidgets.QDoubleSpinBox()
+        self.f0_voiced_unvoiced_cost.setRange(0, 10)
+        self.f0_voiced_unvoiced_cost.setSingleStep(0.1)
+        self.f0_octave_jump_cost.setValue(0.14)
+        
+        self.f0_pitch_ceiling_label = QtWidgets.QLabel("Pitch Ceiling")
+        self.f0_pitch_ceiling = QtWidgets.QDoubleSpinBox()
+        self.f0_pitch_ceiling.setRange(20, 50000)
+        self.f0_pitch_ceiling.setSingleStep(100)
+        self.f0_pitch_ceiling.setValue(15000)
+
+     def click_connections(self):
+        
+        self.f0_button.clicked.connect(lambda: self.update_spectrogram(self.canvas_f0, overlay = "f0"))
+        #self.f0_time_step.valueChanged.connect(lambda: self.change_f0(time_step = self.f0_time_step.value()))
+        self.f0_pitch_floor.valueChanged.connect(lambda: self.change_f0(pitch_floor = self.f0_pitch_floor.value()))
+        self.f0_max_n_cand.valueChanged.connect(lambda: self.change_f0(max_num_of_candidates = self.f0_max_n_cand.value()))
+        self.f0_sil_threshold.valueChanged.connect(lambda: self.change_f0(silence_threshold = self.f0_sil_threshold.value())) 
+        self.f0_voicing_threshold.valueChanged.connect(lambda: self.change_f0(voicing_threshold = self.f0_voicing_threshold.value()))
+        self.f0_octave_cost.valueChanged.connect(lambda: self.change_f0(octave_cost = self.f0_octave_cost.value()))
+        self.f0_octave_jump_cost.valueChanged.connect(lambda: self.change_f0(octave_jump_cost = self.f0_octave_jump_cost.value()))
+        self.f0_voiced_unvoiced_cost.valueChanged.connect(lambda: self.change_f0(voiced_unvoiced_cost = self.f0_voiced_unvoiced_cost.value()))
+        self.f0_pitch_ceiling.valueChanged.connect(lambda: self.change_f0(pitch_ceiling = self.f0_pitch_ceiling.value()))
+ 
+    def add_widgets(self):
+        self.grid.addWidget(self.canvas_f0, 0, 0, 9, 3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_button, 6, 6, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        # Removed because it causes hard to catch crashes and there's an auto calc of the time step anyway
+        #self.grid.addWidget(self.f0_time_step_label, 0, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        #self.grid.addWidget(self.f0_time_step, 0, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_pitch_floor_label, 1, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_floor, 1, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_max_n_cand_label, 2, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_max_n_cand, 2, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+
+        self.grid.addWidget(self.f0_sil_threshold_label, 3, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_sil_threshold, 3, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_voicing_threshold_label, 4, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voicing_threshold, 4, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_octave_cost_label, 5, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_cost, 5, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_octave_jump_cost_label, 6, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_jump_cost, 6, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_voiced_unvoiced_cost_label, 7, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voiced_unvoiced_cost, 7, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        self.grid.addWidget(self.f0_pitch_ceiling_label, 8, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_ceiling, 8, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+class SegTab(TabStruct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+     
+    def define_widgets(self):
+        self.seg_plot_button = QtWidgets.QPushButton("Plot")
+        #self.update_button = QtWidgets.QPushButton("Update")
+        self.segment_button = QtWidgets.QPushButton("Segment")
+
+    def click_connections(self):
+        self.seg_plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas_seg, overlay = 'seg'))
+        #self.update_button.clicked.connect(self.update_plot)
+        self.segment_button.clicked.connect(self.segment_syllable)
+
+    def add_widgets(self):
+        self.grid.addWidget(self.seg_plot_button, 1, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.canvas_seg, 0, 0, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        #self.grid.addWidget(self.update_button, 0, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.sgrid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+ 
+
+     
 class TableWidget(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
