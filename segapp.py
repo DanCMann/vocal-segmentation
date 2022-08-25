@@ -45,7 +45,7 @@ class TableWidget(QtWidgets.QWidget):
 
     def define_tabs(self):
         self.tabs = QtWidgets.QTabWidget()
-        self.main_tab = MainTab(self) 
+        self.main_tab = MainTab() 
         self.amp_tab = AmpTab()
         self.f0_tab = F0Tab()
         self.seg_tab = SegTab()

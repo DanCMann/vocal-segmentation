@@ -12,9 +12,15 @@ import matplotlib.pyplot as plt
 
 from scripts.syllable import Syllable
 
+TABROWS = 9
+TABCOLS = 5
+
+CANVAS_W = 10
+CANVAS_H = 7
+
 class MplCanvas(FigureCanvas):
 
-    def __init__(self, parent=None, width=10, height=7, dpi=300):
+    def __init__(self, parent=None, width=CANVAS_W, height=CANVAS_H, dpi=300):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super().__init__(fig)
@@ -22,12 +28,15 @@ class MplCanvas(FigureCanvas):
 class TabStruct(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
         self.syllable = None
 
         self.canvas = MplCanvas(self)
         self.canvas.axes.contour_ax = self.canvas.axes.twinx()
         
+        # put above constructor??
+        self.rows = TABROWS
+        self.cols = TABCOLS
+
         self.set_ui()
 
     def set_ui(self):
@@ -37,13 +46,14 @@ class TabStruct(QtWidgets.QWidget):
         self.add_widgets()
 
     def define_widgets(self):
-        pass
+        self.plot_button = QtWidgets.QPushButton("Plot")
 
     def click_connections(self):
         pass
 
     def add_widgets(self):
-        pass
+        self.grid.addWidget(self.canvas, 0, 0, self.rows, self.cols-3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.plot_button, self.rows, self.cols, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
     def add_layout(self):
         self.grid =  QtWidgets.QGridLayout(self)
@@ -81,22 +91,19 @@ class TabStruct(QtWidgets.QWidget):
 class MainTab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.parent = parent
 
     def define_widgets(self):
         self.filename_text = QtWidgets.QLineEdit()
         self.browse_button = QtWidgets.QPushButton("Browse")
  
-    def click_connection(self):
-        self.browse_button.clicked.connect(self.browse_file)
+    def click_connections(self):
+        self.browse_button.clicked.connect(lambda: self.browse_file())
     
     def add_widgets(self):
         self.grid.addWidget(self.browse_button, 0, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.filename_text, 0, 0, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
     def browse_file(self):
-        ### stopped working, not sure why
-        print("check")
         file_filter = 'Audio file (*.wav)'
         response = QtWidgets.QFileDialog.getOpenFileName( 
                 parent=self,
@@ -106,7 +113,6 @@ class MainTab(TabStruct):
                 initialFilter='Audio file (*.wav)'
                 )
         self.filename_text.setText(response[0])
-    
 
 class AmpTab(TabStruct):
     def __init__(self, *args, **kwargs):
@@ -114,8 +120,6 @@ class AmpTab(TabStruct):
 
     def define_widgets(self):
 
-        self.amp_button = QtWidgets.QPushButton("Plot")
-        
         self.min_pitch_label = QtWidgets.QLabel("Minimum Pitch")
 
         self.min_pitch_slider = QtWidgets.QSlider(QtCore.Qt.Vertical)
@@ -131,20 +135,21 @@ class AmpTab(TabStruct):
         self.amp_time_step.setRange(0, 1000)
         self.amp_time_step.setValue(0)
         self.amp_time_step.setSingleStep(1)
+        
+        TabStruct.define_widgets(self)
 
     def click_connections(self):
 
-        self.amp_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
         self.min_pitch_slider.valueChanged.connect(lambda: self.change_intensity(minimum_pitch = self.min_pitch_slider.value()))
 
     def add_widgets(self):
-        self.grid.addWidget(self.canvas, 0, 0, 3, 3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.amp_button, 5, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.min_pitch_label, 0, 4, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.min_pitch_slider, 0, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.amp_time_step_label, 1, 4, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.amp_time_step, 1, 5, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        
+        self.grid.addWidget(self.min_pitch_label, 4, self.cols-2, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.min_pitch_slider, 4, self.cols-1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_time_step_label, 5, self.cols-2, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_time_step, 5, self.cols-1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+        TabStruct.add_widgets(self)
+
     def change_intensity(self, **kwargs):
         if(self.syllable is None):
             self.load_sound()
@@ -162,7 +167,6 @@ class F0Tab(TabStruct):
         super().__init__(*args, **kwargs)
 
     def define_widgets(self):
-        self.f0_button = QtWidgets.QPushButton("Plot")
         '''
         self.f0_time_step_label = QtWidgets.QLabel("Time Step")
         self.f0_time_step = QtWidgets.QDoubleSpinBox()
@@ -220,9 +224,11 @@ class F0Tab(TabStruct):
         self.f0_pitch_ceiling.setSingleStep(100)
         self.f0_pitch_ceiling.setValue(15000)
 
+        TabStruct.define_widgets(self)
+
     def click_connections(self):
         
-        self.f0_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = "f0"))
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = "f0"))
         #self.f0_time_step.valueChanged.connect(lambda: self.change_f0(time_step = self.f0_time_step.value()))
         self.f0_pitch_floor.valueChanged.connect(lambda: self.change_f0(pitch_floor = self.f0_pitch_floor.value()))
         self.f0_max_n_cand.valueChanged.connect(lambda: self.change_f0(max_num_of_candidates = self.f0_max_n_cand.value()))
@@ -234,37 +240,37 @@ class F0Tab(TabStruct):
         self.f0_pitch_ceiling.valueChanged.connect(lambda: self.change_f0(pitch_ceiling = self.f0_pitch_ceiling.value()))
  
     def add_widgets(self):
-        self.grid.addWidget(self.canvas, 0, 0, 9, 3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_button, 6, 6, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
         # Removed because it causes hard to catch crashes and there's an auto calc of the time step anyway
         #self.grid.addWidget(self.f0_time_step_label, 0, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         #self.grid.addWidget(self.f0_time_step, 0, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_pitch_floor_label, 1, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_pitch_floor, 1, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_floor_label, 1, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_floor, 1, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_max_n_cand_label, 2, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_max_n_cand, 2, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_max_n_cand_label, 2, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_max_n_cand, 2, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
-        self.grid.addWidget(self.f0_sil_threshold_label, 3, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_sil_threshold, 3, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_sil_threshold_label, 3, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_sil_threshold, 3, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_voicing_threshold_label, 4, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_voicing_threshold, 4, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voicing_threshold_label, 4, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voicing_threshold, 4, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_octave_cost_label, 5, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_octave_cost, 5, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_cost_label, 5, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_cost, 5, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_octave_jump_cost_label, 6, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_octave_jump_cost, 6, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_jump_cost_label, 6, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_octave_jump_cost, 6, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_voiced_unvoiced_cost_label, 7, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_voiced_unvoiced_cost, 7, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voiced_unvoiced_cost_label, 7, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_voiced_unvoiced_cost, 7, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        self.grid.addWidget(self.f0_pitch_ceiling_label, 8, 4, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.f0_pitch_ceiling, 8, 5, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_ceiling_label, 8, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_pitch_ceiling, 8, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
+        TabStruct.add_widgets(self)
+
     def change_f0(self, **kwargs):
         if(self.syllable is None):
             self.load_sound()
@@ -282,20 +288,20 @@ class SegTab(TabStruct):
         super().__init__(*args, **kwargs)
      
     def define_widgets(self):
-        self.seg_plot_button = QtWidgets.QPushButton("Plot")
-        #self.update_button = QtWidgets.QPushButton("Update")
         self.segment_button = QtWidgets.QPushButton("Segment")
+        
+        TabStruct.define_widgets(self)
 
     def click_connections(self):
-        self.seg_plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = 'seg'))
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = 'seg'))
         #self.update_button.clicked.connect(self.update_plot)
         self.segment_button.clicked.connect(self.segment_syllable)
 
     def add_widgets(self):
-        self.grid.addWidget(self.seg_plot_button, 1, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.canvas, 0, 0, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         #self.grid.addWidget(self.update_button, 0, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        TabStruct.add_widgets(self)
 
     def set_data(self):
         n_data = 10
