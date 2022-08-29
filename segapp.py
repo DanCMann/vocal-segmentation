@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from scripts.syllable import Syllable
-from scripts.tabs import MainTab, AmpTab, F0Tab, SegTab
+from scripts.tabs import MainTab, AmpTab, F0Tab, WienTab, SegTab
 
 class App(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -48,6 +48,7 @@ class TableWidget(QtWidgets.QWidget):
         self.main_tab = MainTab() 
         self.amp_tab = AmpTab()
         self.f0_tab = F0Tab()
+        self.wien_tab = WienTab()
         self.seg_tab = SegTab()
     
     def init_UI(self):
@@ -59,6 +60,7 @@ class TableWidget(QtWidgets.QWidget):
         self.tabs.addTab(self.main_tab, "Load")
         self.tabs.addTab(self.amp_tab, "Adjust Amplitude")
         self.tabs.addTab(self.f0_tab, "Adjust F0")
+        self.tabs.addTab(self.wien_tab, "Adjust Wiener Entropy")
         self.tabs.addTab(self.seg_tab, "Perform segmentation")
 
     def set_layout(self):

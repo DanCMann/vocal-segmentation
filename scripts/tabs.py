@@ -33,6 +33,8 @@ class TabStruct(QtWidgets.QWidget):
         self.canvas = MplCanvas(self)
         self.canvas.axes.contour_ax = self.canvas.axes.twinx()
         
+        self.contour_type = None
+
         # put above constructor??
         self.rows = TABROWS
         self.cols = TABCOLS
@@ -49,7 +51,7 @@ class TabStruct(QtWidgets.QWidget):
         self.plot_button = QtWidgets.QPushButton("Plot")
 
     def click_connections(self):
-        pass
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
 
     def add_widgets(self):
         self.grid.addWidget(self.canvas, 0, 0, self.rows, self.cols-3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
@@ -61,7 +63,7 @@ class TabStruct(QtWidgets.QWidget):
     def set_syllable(self, syllable):
         self.syllable = syllable
 
-    def update_spectrogram(self, canvas, overlay = "intensity"):
+    def update_spectrogram(self, canvas):
 
         if(canvas.axes.has_data()):
             canvas.axes.clear()
@@ -71,9 +73,9 @@ class TabStruct(QtWidgets.QWidget):
                 self.load_sound()
         
         self.syllable.draw_spectrogram(canvas.axes) 
-        if(overlay == "intensity"):
+        if(self.contour_type == "intensity"):
             self.syllable.draw_intensity(canvas.axes.contour_ax)
-        elif(overlay == "f0"):
+        elif(self.contour_type == "f0"):
             self.syllable.draw_f0(canvas.axes.contour_ax)
         else:
             self.set_data()
@@ -81,12 +83,35 @@ class TabStruct(QtWidgets.QWidget):
         canvas.axes.contour_ax.set_xlim([self.syllable.sound.xmin, self.syllable.sound.xmax])
         canvas.draw()
 
+    def change_contour(self, **kwargs):
+        if(self.syllable is None):
+            self.load_sound()
+        else:
+            ### abstract??
+            if self.contour_type == "intensity":
+                self.syllable.update_intensity(**kwargs)
+                if not self.syllable.intensity.error:
+                    self.update_spectrogram(self.canvas)
+                else:
+                    # Change to write in a message box
+                    print(self.syllable.intensity.error)
+
+            if self.contour_type == "f0":
+                self.syllable.update_f0(**kwargs)
+                if not self.syllable.f0.error:
+                    self.update_spectrogram(self.canvas)
+                else:
+                    # Change this to write in a message box
+                    print(self.syllable.f0.error)
+
+            if self.contour_type == "wien_ent":
+                pass
+
     def load_sound(self, filename = "./examples/budgie_single.wav"):
         #self.filename = self.filename_text.text()
         self.filename = filename
         self.syllable = Syllable(self.filename)
         #Raise an error here if there is no filename
-
 
 class MainTab(TabStruct):
     def __init__(self, *args, **kwargs):
@@ -117,6 +142,8 @@ class MainTab(TabStruct):
 class AmpTab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.contour_type = 'intensity'
 
     def define_widgets(self):
 
@@ -140,8 +167,8 @@ class AmpTab(TabStruct):
 
     def click_connections(self):
 
-        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
-        self.min_pitch_slider.valueChanged.connect(lambda: self.change_intensity(minimum_pitch = self.min_pitch_slider.value()))
+        self.min_pitch_slider.valueChanged.connect(lambda: self.change_contour(minimum_pitch = self.min_pitch_slider.value()))
+        TabStruct.click_connections(self)
 
     def add_widgets(self):
         self.grid.addWidget(self.min_pitch_label, 4, self.cols-2, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
@@ -150,21 +177,11 @@ class AmpTab(TabStruct):
         self.grid.addWidget(self.amp_time_step, 5, self.cols-1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         TabStruct.add_widgets(self)
 
-    def change_intensity(self, **kwargs):
-        if(self.syllable is None):
-            self.load_sound()
-        
-        else:
-            self.syllable.update_intensity(**kwargs)
-            if not self.syllable.intensity.error:
-                self.update_spectrogram(self.canvas, overlay = "intensity")
-            else:
-                # Change to write in a message box
-                print(self.syllable.intensity.error)
-
 class F0Tab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    
+        self.contour_type = 'f0'
 
     def define_widgets(self):
         '''
@@ -228,17 +245,18 @@ class F0Tab(TabStruct):
 
     def click_connections(self):
         
-        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = "f0"))
-        #self.f0_time_step.valueChanged.connect(lambda: self.change_f0(time_step = self.f0_time_step.value()))
-        self.f0_pitch_floor.valueChanged.connect(lambda: self.change_f0(pitch_floor = self.f0_pitch_floor.value()))
-        self.f0_max_n_cand.valueChanged.connect(lambda: self.change_f0(max_num_of_candidates = self.f0_max_n_cand.value()))
-        self.f0_sil_threshold.valueChanged.connect(lambda: self.change_f0(silence_threshold = self.f0_sil_threshold.value())) 
-        self.f0_voicing_threshold.valueChanged.connect(lambda: self.change_f0(voicing_threshold = self.f0_voicing_threshold.value()))
-        self.f0_octave_cost.valueChanged.connect(lambda: self.change_f0(octave_cost = self.f0_octave_cost.value()))
-        self.f0_octave_jump_cost.valueChanged.connect(lambda: self.change_f0(octave_jump_cost = self.f0_octave_jump_cost.value()))
-        self.f0_voiced_unvoiced_cost.valueChanged.connect(lambda: self.change_f0(voiced_unvoiced_cost = self.f0_voiced_unvoiced_cost.value()))
-        self.f0_pitch_ceiling.valueChanged.connect(lambda: self.change_f0(pitch_ceiling = self.f0_pitch_ceiling.value()))
- 
+        #self.f0_time_step.valueChanged.connect(lambda: self.change_contour(time_step = self.f0_time_step.value()))
+        self.f0_pitch_floor.valueChanged.connect(lambda: self.change_contour(pitch_floor = self.f0_pitch_floor.value()))
+        self.f0_max_n_cand.valueChanged.connect(lambda: self.change_contour(max_num_of_candidates = self.f0_max_n_cand.value()))
+        self.f0_sil_threshold.valueChanged.connect(lambda: self.change_contour(silence_threshold = self.f0_sil_threshold.value())) 
+        self.f0_voicing_threshold.valueChanged.connect(lambda: self.change_contour(voicing_threshold = self.f0_voicing_threshold.value()))
+        self.f0_octave_cost.valueChanged.connect(lambda: self.change_contour(octave_cost = self.f0_octave_cost.value()))
+        self.f0_octave_jump_cost.valueChanged.connect(lambda: self.change_contour(octave_jump_cost = self.f0_octave_jump_cost.value()))
+        self.f0_voiced_unvoiced_cost.valueChanged.connect(lambda: self.change_contour(voiced_unvoiced_cost = self.f0_voiced_unvoiced_cost.value()))
+        self.f0_pitch_ceiling.valueChanged.connect(lambda: self.change_contour(pitch_ceiling = self.f0_pitch_ceiling.value()))
+        
+        TabStruct.click_connections(self)
+
     def add_widgets(self):
         
         # Removed because it causes hard to catch crashes and there's an auto calc of the time step anyway
@@ -271,29 +289,28 @@ class F0Tab(TabStruct):
         
         TabStruct.add_widgets(self)
 
-    def change_f0(self, **kwargs):
-        if(self.syllable is None):
-            self.load_sound()
-        else:
+class WienTab(TabStruct):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.contour_type = "intensity"
 
-            self.syllable.update_f0(**kwargs)
-            if not self.syllable.f0.error:
-                self.update_spectrogram(self.canvas, overlay = "f0")
-            else:
-                # Change this to write in a message box
-                print(self.syllable.f0.error)
+    def click_connections(self):
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
 
 class SegTab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-     
+        
+        self.contour_type = 'seg'
+
     def define_widgets(self):
         self.segment_button = QtWidgets.QPushButton("Segment")
         
         TabStruct.define_widgets(self)
 
     def click_connections(self):
-        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas, overlay = 'seg'))
+        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
         #self.update_button.clicked.connect(self.update_plot)
         self.segment_button.clicked.connect(self.segment_syllable)
 
