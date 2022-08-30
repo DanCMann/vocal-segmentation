@@ -1,5 +1,6 @@
 import parselmouth
 import numpy as np
+from scipy.stats.mstats import gmean
 
 class Intensity:
     def __init__(self, minimum_pitch=100, time_step:float=None, subtract_mean:bool= True):
@@ -155,7 +156,63 @@ class F0:
     @pitch_ceiling.setter
     def pitch_ceiling(self, new_pitch_ceiling):
         self._pitch_ceiling = new_pitch_ceiling
- 
+
+class WienerEntropy:
+    def __init__(self, window_size = 0.002, time_step = 0.001, min_freq = 500, max_freq = 10000):
+        
+        self.window_size = window_size
+        self.time_step = time_step
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+
+        self.contour = None
+        self.time = None
+        
+        self.error = None
+
+    def get_we_contour(self, sound):
+        try:
+            ###!!! Preallocate sizes
+
+            period = parselmouth.praat.call(sound, "Get sampling period")
+            duration = parselmouth.praat.call(sound, "Get total duration")
+            start_time = parselmouth.praat.call(sound, "Get time from sample number", 1)
+            frames = np.floor((((duration)- self.window_size)/self.time_step) + 1)
+            print(period, duration, start_time, frames)
+            time = []
+            wiener_entropy = []
+
+            for frame in range(int(frames)):
+                ### take sound slices and get 
+                time_point = start_time + (self.window_size/2)
+                time.append(time_point)
+                sound_slice = sound.extract_part(
+                    from_time = start_time,
+                    to_time = start_time + self.window_size,
+                    window_shape = 'GAUSSIAN1',
+                    relative_width = 1,
+                    preserve_times = True)
+                spect = sound_slice.to_spectrum(fast = False)
+                start_bin = round(spect.get_bin_number_from_frequency(self.min_freq))
+                end_bin = round(spect.get_bin_number_from_frequency(self.max_freq))
+                start_time = start_time + self.time_step
+                magnitude = []
+                for bin in range(start_bin, end_bin):
+                    ### calculate magnitude
+                    real = spect.get_real_value_in_bin(bin)
+                    imag = spect.get_imaginary_value_in_bin(bin)
+                    magnitude.append(((real/period)**2) + ((imag/period)**2))
+                    
+                arithmetic_mean = np.mean(magnitude)
+                geometric_mean = gmean(magnitude)
+                wiener_entropy.append(np.log(geometric_mean/arithmetic_mean))
+            
+            self.time = time
+            self.contour = wiener_entropy
+            self.error = None
+        except Exception as e:
+            self.error = e
+
 class Syllable(parselmouth.Sound):
     def __init__(self, filename, *args, **kwargs):
         super().__init__(filename, *args, **kwargs)
@@ -170,7 +227,11 @@ class Syllable(parselmouth.Sound):
         f0 = F0()
         f0.get_f0_contour(self.sound)
         self.f0 = f0
-    
+
+        wiener_entropy = WienerEntropy()
+        wiener_entropy.get_we_contour(self.sound)
+        self.wiener_entropy = wiener_entropy 
+
     def update_intensity(self, minimum_pitch = None, time_step = None, subtract_mean = None ):
         if minimum_pitch:
             self.intensity.minimum_pitch = minimum_pitch
@@ -263,9 +324,16 @@ class Syllable(parselmouth.Sound):
         canvas_axes.grid(False)
         canvas_axes.set_ylim(0, self.spectrogram.ymax)
         canvas_axes.set_ylabel("fundamental frequency [Hz]")
+    
+    def draw_wiener_entropy(self, canvas_axes):
+        canvas_axes.plot(self.wiener_entropy.time, self.wiener_entropy.contour, linewidth=3, color = 'w')
+        canvas_axes.plot(self.wiener_entropy.time, self.wiener_entropy.contour, linewidth=1)
+        canvas_axes.grid(False)
+        canvas_axes.set_ylabel("Wiener Entropy")
 
 if __name__ == '__main__':
     syllable = Syllable('./examples/budgie_single.wav')
+    '''
     print(syllable.intensity.contour)
     print(syllable.intensity.time)
     syllable.update_intensity(minimum_pitch = 500)
@@ -277,4 +345,7 @@ if __name__ == '__main__':
     syllable.update_f0(pitch_floor = 600)
     print(syllable.f0.contour)
     print(syllable.f0.time)
+    '''
+    print(syllable.wiener_entropy.contour)
+    print(syllable.wiener_entropy.time)
  

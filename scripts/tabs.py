@@ -77,6 +77,8 @@ class TabStruct(QtWidgets.QWidget):
             self.syllable.draw_intensity(canvas.axes.contour_ax)
         elif(self.contour_type == "f0"):
             self.syllable.draw_f0(canvas.axes.contour_ax)
+        elif(self.contour_type == "wiener_entropy"):
+            self.syllable.draw_wiener_entropy(canvas.axes.contour_ax)
         else:
             self.set_data()
 
@@ -105,7 +107,11 @@ class TabStruct(QtWidgets.QWidget):
                     print(self.syllable.f0.error)
 
             if self.contour_type == "wien_ent":
-                pass
+               self.syllable.update_we(**kwargs)
+               if not self.syllable.we.error:
+                   self.update_spectrogram(self.canvas)
+               else:
+                   print(self.syllable.we.error)
 
     def load_sound(self, filename = "./examples/budgie_single.wav"):
         #self.filename = self.filename_text.text()
@@ -293,7 +299,7 @@ class WienTab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.contour_type = "intensity"
+        self.contour_type = "wiener_entropy"
 
     def click_connections(self):
         self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
