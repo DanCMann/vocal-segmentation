@@ -177,15 +177,18 @@ class WienerEntropy:
             period = parselmouth.praat.call(sound, "Get sampling period")
             duration = parselmouth.praat.call(sound, "Get total duration")
             start_time = parselmouth.praat.call(sound, "Get time from sample number", 1)
-            frames = np.floor((((duration)- self.window_size)/self.time_step) + 1)
+            frames = int(np.floor((((duration)- self.window_size)/self.time_step) + 1))
             print(period, duration, start_time, frames)
-            time = []
-            wiener_entropy = []
+            #time = []
+            time = np.zeros(frames)
+            #wiener_entropy = []
+            wiener_entropy = np.zeros(frames)
 
-            for frame in range(int(frames)):
+            for frame in range(frames):
                 ### take sound slices and get 
                 time_point = start_time + (self.window_size/2)
-                time.append(time_point)
+                #time.append(time_point)
+                time[frame] = time_point
                 sound_slice = sound.extract_part(
                     from_time = start_time,
                     to_time = start_time + self.window_size,
@@ -196,17 +199,20 @@ class WienerEntropy:
                 start_bin = round(spect.get_bin_number_from_frequency(self.min_freq))
                 end_bin = round(spect.get_bin_number_from_frequency(self.max_freq))
                 start_time = start_time + self.time_step
-                magnitude = []
+                #magnitude = []
+                magnitude = np.zeros(end_bin - start_bin)
                 for bin in range(start_bin, end_bin):
                     ### calculate magnitude
+                    count = bin - start_bin
                     real = spect.get_real_value_in_bin(bin)
                     imag = spect.get_imaginary_value_in_bin(bin)
-                    magnitude.append(((real/period)**2) + ((imag/period)**2))
-                    
+                    #magnitude.append(((real/period)**2) + ((imag/period)**2))
+                    magnitude[bin - start_bin] = ((real/period)**2) + ((imag/period)**2)
+
                 arithmetic_mean = np.mean(magnitude)
                 geometric_mean = gmean(magnitude)
-                wiener_entropy.append(np.log(geometric_mean/arithmetic_mean))
-            
+                #wiener_entropy.append(np.log(geometric_mean/arithmetic_mean))
+                wiener_entropy[frame] = np.log(geometric_mean/arithmetic_mean)
             self.time = time
             self.contour = wiener_entropy
             self.error = None
