@@ -347,6 +347,12 @@ class Syllable(parselmouth.Sound):
         
         canvas_axes.set_xlabel("time [s]")
         canvas_axes.set_ylabel("frequency [Hz]")
+    
+    def draw_wavform(self, canvas_axes):
+        canvas_axes.plot(self.sound.xs(), self.sound.values.T, linewidth = 0.5)
+        #canvas_axes.plot([self.sound.xmin, self.sound.xmax])
+        canvas_axes.set_xlabel("time [s]")
+        canvas_axes.set_ylabel("amplitude")
 
     def draw_intensity(self, canvas_axes):
         #canvas_axes.plot(self.intensity.xs(), self.intensity.values.T, linewidth=3, color='w')

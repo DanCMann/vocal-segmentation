@@ -33,6 +33,8 @@ class TabStruct(QtWidgets.QWidget):
         self.canvas = MplCanvas(self)
         self.canvas.axes.contour_ax = self.canvas.axes.twinx()
         
+        self.wav_canvas = MplCanvas(self, width = CANVAS_W, height = 1)
+        
         self.contour_type = None
 
         # put above constructor??
@@ -54,7 +56,8 @@ class TabStruct(QtWidgets.QWidget):
         self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
 
     def add_widgets(self):
-        self.grid.addWidget(self.canvas, 0, 0, self.rows, self.cols-3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.canvas, 0, 0, self.rows-1, self.cols-3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.wav_canvas, self.rows-1, 0, 1, self.cols-3, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.plot_button, self.rows, self.cols, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
     def add_layout(self):
@@ -71,7 +74,8 @@ class TabStruct(QtWidgets.QWidget):
         else:
             if(self.syllable is None):
                 self.load_sound()
-        
+                self.syllable.draw_wavform(self.wav_canvas.axes)
+                self.wav_canvas.draw() 
         self.syllable.draw_spectrogram(canvas.axes) 
         if(self.contour_type == "intensity"):
             self.syllable.draw_intensity(canvas.axes.contour_ax)
@@ -80,8 +84,8 @@ class TabStruct(QtWidgets.QWidget):
         elif(self.contour_type == "wiener_entropy"):
             self.syllable.draw_wiener_entropy(canvas.axes.contour_ax)
         else:
-            self.set_data()
-
+            #self.set_data()
+            self.segment_syllable()
         canvas.axes.contour_ax.set_xlim([self.syllable.sound.xmin, self.syllable.sound.xmax])
         canvas.draw()
 
@@ -366,55 +370,26 @@ class SegTab(TabStruct):
     def define_widgets(self):
         self.segment_button = QtWidgets.QPushButton("Segment")
         
-        TabStruct.define_widgets(self)
+        super().define_widgets()
 
     def click_connections(self):
-        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        #self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
         #self.update_button.clicked.connect(self.update_plot)
-        self.segment_button.clicked.connect(self.segment_syllable)
+        self.segment_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        super().click_connections()
 
     def add_widgets(self):
         #self.grid.addWidget(self.update_button, 0, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        
-        TabStruct.add_widgets(self)
+        super().add_widgets()
 
-    def set_data(self):
-        n_data = 10
-        #self.xdata = list(range(n_data))
-        self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
-        print(self.xdata)
-        # We need to store a reference to the plotted line
-        # somewhere, so we can apply the new data to it.
-        #self._plot_ref = None
-        #self.update_plot()
-        self.canvas.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
-        
-    def update_plot(self):
-        # Drop off the first y element, append a new one.
-        self.xdata = self.xdata[1:] + [random.uniform(0, self.syllable.duration)]
-
-        # Note: we no longer need to clear the axis.
-        if self._plot_ref is None:
-            # First time we have no plot reference, so do a normal plot.
-            # .plot returns a list of line <reference>s, as we're
-            # only getting one we can take the first element.
-            self.canvas.axes.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
-            #self._plot_ref = plot_refs[0]
-        else:
-            # We have a reference, we can use it to update the data for that line.
-            self._plot_ref.set_xdata(self.xdata)
-
-        # Trigger the canvas to update and redraw.
-        self.canvas.draw()
-   
     def segment_syllable(self):
         #print("segment")
         n_data = 10
         self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
         print(self.xdata)
         self.canvas.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
- 
+        #self.update_plot() 
 
 if __name__ == '__main__':
     pass
