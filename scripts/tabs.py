@@ -106,12 +106,12 @@ class TabStruct(QtWidgets.QWidget):
                     # Change this to write in a message box
                     print(self.syllable.f0.error)
 
-            if self.contour_type == "wien_ent":
-               self.syllable.update_we(**kwargs)
-               if not self.syllable.we.error:
+            if self.contour_type == "wiener_entropy":
+               self.syllable.update_wiener_entropy(**kwargs)
+               if not self.syllable.wiener_entropy.error:
                    self.update_spectrogram(self.canvas)
                else:
-                   print(self.syllable.we.error)
+                   print(self.syllable.wiener_entropy.error)
 
     def load_sound(self, filename = "./examples/budgie_single.wav"):
         #self.filename = self.filename_text.text()
@@ -169,19 +169,19 @@ class AmpTab(TabStruct):
         self.amp_time_step.setValue(0)
         self.amp_time_step.setSingleStep(1)
         
-        TabStruct.define_widgets(self)
+        super().define_widgets()
 
     def click_connections(self):
 
         self.min_pitch_slider.valueChanged.connect(lambda: self.change_contour(minimum_pitch = self.min_pitch_slider.value()))
-        TabStruct.click_connections(self)
+        super().click_connections()
 
     def add_widgets(self):
         self.grid.addWidget(self.min_pitch_label, 4, self.cols-2, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.min_pitch_slider, 4, self.cols-1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.amp_time_step_label, 5, self.cols-2, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.amp_time_step, 5, self.cols-1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        TabStruct.add_widgets(self)
+        super().add_widgets()
 
 class F0Tab(TabStruct):
     def __init__(self, *args, **kwargs):
@@ -247,7 +247,7 @@ class F0Tab(TabStruct):
         self.f0_pitch_ceiling.setSingleStep(100)
         self.f0_pitch_ceiling.setValue(15000)
 
-        TabStruct.define_widgets(self)
+        super().define_widgets()
 
     def click_connections(self):
         
@@ -261,7 +261,7 @@ class F0Tab(TabStruct):
         self.f0_voiced_unvoiced_cost.valueChanged.connect(lambda: self.change_contour(voiced_unvoiced_cost = self.f0_voiced_unvoiced_cost.value()))
         self.f0_pitch_ceiling.valueChanged.connect(lambda: self.change_contour(pitch_ceiling = self.f0_pitch_ceiling.value()))
         
-        TabStruct.click_connections(self)
+        super().click_connections()
 
     def add_widgets(self):
         
@@ -293,16 +293,69 @@ class F0Tab(TabStruct):
         self.grid.addWidget(self.f0_pitch_ceiling_label, 8, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.f0_pitch_ceiling, 8, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         
-        TabStruct.add_widgets(self)
+        super().add_widgets()
 
 class WienTab(TabStruct):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         self.contour_type = "wiener_entropy"
+    
+    def define_widgets(self):
+        self.min_freq_label = QtWidgets.QLabel("Minimum Frequency")
+
+        self.min_freq_slider = QtWidgets.QSlider(QtCore.Qt.Vertical)
+        self.min_freq_slider.setMinimum(10)
+        self.min_freq_slider.setMaximum(2000)
+        self.min_freq_slider.setValue(400)
+        self.min_freq_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.min_freq_slider.setTickInterval(10)
+
+        self.max_freq_label = QtWidgets.QLabel("Maximum Frequency")
+
+        self.max_freq_slider = QtWidgets.QSlider(QtCore.Qt.Vertical)
+        self.max_freq_slider.setMinimum(1000)
+        self.max_freq_slider.setMaximum(30000)
+        self.max_freq_slider.setValue(15000)
+        self.max_freq_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.max_freq_slider.setTickInterval(1000)
+
+        self.time_step_label = QtWidgets.QLabel("Time Step")
+
+        self.time_step = QtWidgets.QDoubleSpinBox()
+        self.time_step.setRange(0, 10)
+        self.time_step.setValue(0)
+        self.time_step.setSingleStep(0.001)
+        
+        self.window_size_label = QtWidgets.QLabel("Window Size")
+
+        self.window_size = QtWidgets.QDoubleSpinBox()
+        self.window_size.setRange(0, 10)
+        self.window_size.setValue(0)
+        self.window_size.setSingleStep(0.001)
+        
+        super().define_widgets()
 
     def click_connections(self):
-        self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        #self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        self.min_freq_slider.valueChanged.connect(lambda: self.change_contour(min_freq = self.min_freq_slider.value()))
+        self.max_freq_slider.valueChanged.connect(lambda: self.change_contour(max_freq = self.max_freq_slider.value()))
+        self.time_step.valueChanged.connect(lambda: self.change_contour(time_step = self.time_step.value()))
+        self.window_size.valueChanged.connect(lambda: self.change_contour(window_size = self.window_size.value()))
+
+        super().click_connections()
+
+    def add_widgets(self):
+        self.grid.addWidget(self.min_freq_label, 1, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.min_freq_slider, 1, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.max_freq_label, 2, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.max_freq_slider, 2, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.time_step_label, 3, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.time_step, 3, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.window_size_label, 4, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.window_size, 4, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        
+        super().add_widgets()
 
 class SegTab(TabStruct):
     def __init__(self, *args, **kwargs):

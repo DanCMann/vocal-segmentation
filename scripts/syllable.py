@@ -160,10 +160,10 @@ class F0:
 class WienerEntropy:
     def __init__(self, window_size = 0.002, time_step = 0.001, min_freq = 500, max_freq = 10000):
         
-        self.window_size = window_size
-        self.time_step = time_step
-        self.min_freq = min_freq
-        self.max_freq = max_freq
+        self._window_size = window_size
+        self._time_step = time_step
+        self._min_freq = min_freq
+        self._max_freq = max_freq
 
         self.contour = None
         self.time = None
@@ -177,7 +177,7 @@ class WienerEntropy:
             period = parselmouth.praat.call(sound, "Get sampling period")
             duration = parselmouth.praat.call(sound, "Get total duration")
             start_time = parselmouth.praat.call(sound, "Get time from sample number", 1)
-            frames = int(np.floor((((duration)- self.window_size)/self.time_step) + 1))
+            frames = int(np.floor((((duration)- self._window_size)/self._time_step) + 1))
             print(period, duration, start_time, frames)
             #time = []
             time = np.zeros(frames)
@@ -186,19 +186,19 @@ class WienerEntropy:
 
             for frame in range(frames):
                 ### take sound slices and get 
-                time_point = start_time + (self.window_size/2)
+                time_point = start_time + (self._window_size/2)
                 #time.append(time_point)
                 time[frame] = time_point
                 sound_slice = sound.extract_part(
                     from_time = start_time,
-                    to_time = start_time + self.window_size,
+                    to_time = start_time + self._window_size,
                     window_shape = 'GAUSSIAN1',
                     relative_width = 1,
                     preserve_times = True)
                 spect = sound_slice.to_spectrum(fast = False)
-                start_bin = round(spect.get_bin_number_from_frequency(self.min_freq))
-                end_bin = round(spect.get_bin_number_from_frequency(self.max_freq))
-                start_time = start_time + self.time_step
+                start_bin = round(spect.get_bin_number_from_frequency(self._min_freq))
+                end_bin = round(spect.get_bin_number_from_frequency(self._max_freq))
+                start_time = start_time + self._time_step
                 #magnitude = []
                 magnitude = np.zeros(end_bin - start_bin)
                 for bin in range(start_bin, end_bin):
@@ -218,6 +218,34 @@ class WienerEntropy:
             self.error = None
         except Exception as e:
             self.error = e
+
+    @property
+    def time_step(self):
+        return self._time_step
+    @time_step.setter
+    def time_step(self, new_time_step):
+        self._time_step = new_time_step
+
+    @property
+    def window_size(self):
+        return self._window_size
+    @window_size.setter
+    def window_size(self, new_window_size):
+        self._window_size = new_window_size
+    
+    @property
+    def min_freq(self):
+        return self._min_freq
+    @min_freq.setter
+    def min_freq(self, new_min_freq):
+        self._min_freq = new_min_freq
+
+    @property
+    def max_freq(self):
+        return self._max_freq
+    @max_freq.setter
+    def max_freq(self, new_max_freq):
+        self._max_freq = new_max_freq
 
 class Syllable(parselmouth.Sound):
     def __init__(self, filename, *args, **kwargs):
@@ -273,6 +301,18 @@ class Syllable(parselmouth.Sound):
             self.f0.pitch_ceiling = pitch_ceiling
 
         self.f0.get_f0_contour(self.sound)
+    
+    def update_wiener_entropy(self, time_step = None, window_size = None, min_freq = None, max_freq = None):
+        if time_step:
+            self.wiener_entropy.time_step = time_step
+        if window_size:
+            self.wiener_entropy.window_size = window_size
+        if min_freq:
+            self.wiener_entropy.min_freq = min_freq
+        if max_freq:
+            self.wiener_entropy.max_freq = max_freq
+
+        self.wiener_entropy.get_we_contour(self.sound)
 
     def draw_spectrogram(self, canvas_axes, dynamic_range=70):
         '''
