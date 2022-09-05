@@ -1,6 +1,7 @@
 import parselmouth
 import numpy as np
 from scipy.stats.mstats import gmean
+import random
 
 class Intensity:
     def __init__(self, minimum_pitch=100, time_step:float=None, subtract_mean:bool= True):
@@ -314,6 +315,10 @@ class Syllable(parselmouth.Sound):
 
         self.wiener_entropy.get_we_contour(self.sound)
 
+    def segment_syllable(self):
+        n_data = 10
+        self.xdata = [random.uniform(0, self.duration) for i in range(n_data)]
+        
     def draw_spectrogram(self, canvas_axes, dynamic_range=70):
         '''
         The best way I could figure out to do this was to pass the actual matplotlib.axes object as an arg. 
@@ -382,6 +387,10 @@ class Syllable(parselmouth.Sound):
         canvas_axes.plot(self.wiener_entropy.time, self.wiener_entropy.contour, linewidth=1)
         canvas_axes.grid(False)
         canvas_axes.set_ylabel("Wiener Entropy")
+
+    def draw_segments(self, canvas_axes):
+        self.segment_syllable()
+        canvas_axes.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
 
 if __name__ == '__main__':
     syllable = Syllable('./examples/budgie_single.wav')

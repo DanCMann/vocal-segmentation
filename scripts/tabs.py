@@ -1,6 +1,5 @@
 import sys
 import os
-import random
 import matplotlib
 matplotlib.use('Qt5Agg')
 
@@ -84,8 +83,9 @@ class TabStruct(QtWidgets.QWidget):
         elif(self.contour_type == "wiener_entropy"):
             self.syllable.draw_wiener_entropy(canvas.axes.contour_ax)
         else:
-            #self.set_data()
-            self.segment_syllable()
+            #self.segment_syllable()
+            self.syllable.draw_segments(canvas.axes)
+
         canvas.axes.contour_ax.set_xlim([self.syllable.sound.xmin, self.syllable.sound.xmax])
         canvas.draw()
 
@@ -384,11 +384,12 @@ class SegTab(TabStruct):
         super().add_widgets()
 
     def segment_syllable(self):
+        pass
         #print("segment")
-        n_data = 10
-        self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
-        print(self.xdata)
-        self.canvas.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
+        #n_data = 10
+        #self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
+        #print(self.xdata)
+        #self.canvas.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
         #self.update_plot() 
 
 if __name__ == '__main__':
