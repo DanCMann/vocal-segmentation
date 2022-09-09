@@ -383,14 +383,5 @@ class SegTab(TabStruct):
         self.grid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         super().add_widgets()
 
-    def segment_syllable(self):
-        pass
-        #print("segment")
-        #n_data = 10
-        #self.xdata = [random.uniform(0, self.syllable.duration) for i in range(n_data)]
-        #print(self.xdata)
-        #self.canvas.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
-        #self.update_plot() 
-
 if __name__ == '__main__':
     pass

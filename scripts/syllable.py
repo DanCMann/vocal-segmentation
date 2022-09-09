@@ -3,19 +3,55 @@ import numpy as np
 from scipy.stats.mstats import gmean
 import random
 
-class Intensity:
-    def __init__(self, minimum_pitch=100, time_step:float=None, subtract_mean:bool= True):
-        self._minimum_pitch = minimum_pitch
+
+class Contour:
+    def __init__(self, time_step:float=None):
         self._time_step = time_step
-        self._subtract_mean = subtract_mean
-        self.contour = None
         self.time = None
+        self.contour = None
+        self.error = None
+
+    ## putting time_step as a property of the parent seems to be messing things up
+    # Now time_step doesn't work in Wiener Entropy. 
+    # It appears to work in amp and f0, but that's just because there is no real connection doing anything
+
+    @property
+    def time_step(self):
+        return self._time_step
+    @time_step.setter
+    def time_step(self, new_time_step):
+        self._time_step = new_time_step
+ 
+    def calc_percent_change(dataframe, colname) :
+        # should I do percent change by frame or standardize by time?
+
+        start_value = 0
+        #col = list(dataframe.columns)[1] 
+        prcnt_chng = []
+
+        for i in range(0, len(dataframe[colname])) :
+
+            row = dataframe[colname][i]
+            prcnt_chng.append(abs(((row - start_value) / start_value)) * 100)
+            #print(i, "::", start_value, row, "CHANGE:", prcnt_chng)
+            start_value = row
+
+        dataframe['percent_change' + '_' + colname] = prcnt_chng
+        
+        return(dataframe)
+
+
+class Intensity(Contour):
+    def __init__(self, minimum_pitch=100, time_step: float=None, subtract_mean:bool= True):
+        super().__init__(time_step)
+        self._minimum_pitch = minimum_pitch
+        self._subtract_mean = subtract_mean
         
         self._intensity = None
         
         # This should help pass the error along
         # there should be a better way to do this
-        self.error = None
+        #self.error = None
 
     def get_intensity_contour(self, sound):
         try:
@@ -34,26 +70,19 @@ class Intensity:
         self._minimum_pitch = new_minimum_pitch
     
     @property
-    def time_step(self):
-        return self._time_step
-    @time_step.setter
-    def time_step(self):
-        self._time_step = new_time_step
-    
-    @property
     def subtract_mean(self):
         return self._subtract_mean
     @subtract_mean.setter
     def subtract_mean(self, new_subtract_mean):
         self._subtract_mean = new_subtract_mean
 
-class F0:
-    def __init__(self, time_step = None, pitch_floor: float = 500, max_num_of_candidates: int = 15, 
+class F0(Contour):
+    def __init__(self, time_step: float = None, pitch_floor: float = 500, max_num_of_candidates: int = 15, 
             very_accurate:bool = False, silence_threshold: float = 0.03, voicing_threshold: float = 0.45,
             octave_cost: float = 0.01, octave_jump_cost: float = 0.35,voiced_unvoiced_cost: float = 0.14,
             pitch_ceiling: float = 15000.0):
 
-        self._time_step = time_step
+        super().__init__(time_step)
         self._pitch_floor = pitch_floor
         self._max_num_of_candidates = max_num_of_candidates
         self._very_accurate = very_accurate
@@ -66,11 +95,6 @@ class F0:
 
         self._f0 = None
         
-        self.contour = None
-        self.time = None
-        
-        self.error = None
-
     def get_f0_contour(self, sound):
         try:
             self._f0 = sound.to_pitch_ac(time_step = self._time_step, pitch_floor = self._pitch_floor,
@@ -88,13 +112,6 @@ class F0:
             self.error = e
             print(e)
 
-    @property
-    def time_step(self):
-        return self._time_step
-    @time_step.setter
-    def time_step(self, new_time_step):
-        self._time_step = new_time_step
-    
     @property
     def pitch_floor(self):
         return self._pitch_floor
@@ -143,7 +160,7 @@ class F0:
     @octave_jump_cost.setter
     def octave_jump_cost(self, new_octave_jump_cost):
         self._octave_jump_cost = new_octave_jump_cost
-    
+ 
     @property
     def voiced_unvoiced_cost(self):
         return self._voiced_unvoiced_cost
@@ -158,18 +175,13 @@ class F0:
     def pitch_ceiling(self, new_pitch_ceiling):
         self._pitch_ceiling = new_pitch_ceiling
 
-class WienerEntropy:
-    def __init__(self, window_size = 0.002, time_step = 0.001, min_freq = 500, max_freq = 10000):
+class WienerEntropy(Contour):
+    def __init__(self, time_step: float=None, window_size = 0.002, min_freq = 500, max_freq = 10000):
         
+        super().__init__(time_step) 
         self._window_size = window_size
-        self._time_step = time_step
         self._min_freq = min_freq
         self._max_freq = max_freq
-
-        self.contour = None
-        self.time = None
-        
-        self.error = None
 
     def get_we_contour(self, sound):
         try:
@@ -221,13 +233,6 @@ class WienerEntropy:
             self.error = e
 
     @property
-    def time_step(self):
-        return self._time_step
-    @time_step.setter
-    def time_step(self, new_time_step):
-        self._time_step = new_time_step
-
-    @property
     def window_size(self):
         return self._window_size
     @window_size.setter
@@ -263,7 +268,7 @@ class Syllable(parselmouth.Sound):
         f0.get_f0_contour(self.sound)
         self.f0 = f0
 
-        wiener_entropy = WienerEntropy()
+        wiener_entropy = WienerEntropy(time_step = 0.001)
         wiener_entropy.get_we_contour(self.sound)
         self.wiener_entropy = wiener_entropy 
 
@@ -318,7 +323,7 @@ class Syllable(parselmouth.Sound):
     def segment_syllable(self):
         n_data = 10
         self.xdata = [random.uniform(0, self.duration) for i in range(n_data)]
-        
+
     def draw_spectrogram(self, canvas_axes, dynamic_range=70):
         '''
         The best way I could figure out to do this was to pass the actual matplotlib.axes object as an arg. 
