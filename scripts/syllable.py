@@ -2,7 +2,7 @@ import parselmouth
 import numpy as np
 from scipy.stats.mstats import gmean
 import random
-
+from scripts.segments import SegmentBoundaries
 
 class Contour:
     def __init__(self, time_step:float=None):
@@ -11,10 +11,6 @@ class Contour:
         self.contour = None
         self.error = None
 
-    ## putting time_step as a property of the parent seems to be messing things up
-    # Now time_step doesn't work in Wiener Entropy. 
-    # It appears to work in amp and f0, but that's just because there is no real connection doing anything
-
     @property
     def time_step(self):
         return self._time_step
@@ -22,24 +18,61 @@ class Contour:
     def time_step(self, new_time_step):
         self._time_step = new_time_step
  
-    def calc_percent_change(dataframe, colname) :
+    def calc_percent_change(self) :
         # should I do percent change by frame or standardize by time?
 
-        start_value = 0
-        #col = list(dataframe.columns)[1] 
-        prcnt_chng = []
+        start_value = 0.0
+        self.percent_change = np.zeros(len(self.contour)) 
 
-        for i in range(0, len(dataframe[colname])) :
-
-            row = dataframe[colname][i]
-            prcnt_chng.append(abs(((row - start_value) / start_value)) * 100)
-            #print(i, "::", start_value, row, "CHANGE:", prcnt_chng)
+        for i in range(0, len(self.contour)):
+            row = self.contour[i]
+            self.percent_change[i] = abs(((row - start_value) / start_value)) * 100
+            #print(i, "::", start_value, row, "CHANGE:", self.percent_change[i])
             start_value = row
 
-        dataframe['percent_change' + '_' + colname] = prcnt_chng
-        
-        return(dataframe)
+    def threshold_detection(self, threshold) :
+        self.calc_percent_change()
+        self.boundaries = [i for i in range(len(self.percent_change)) if self.percent_change[i] >= threshold]
+        #self.boundaries = [1 if x >= threshold else 0 for x in self.percent_change]
+        #breakpoint()
+        #self.boundaries = [i for i in range(len(self.boundaries)) if self.boundaries[i] == 1]
+        self.boundaries = self.time[self.boundaries] 
+    
+    def buffer_check(self, buffer):
+        '''  create a new list by checking if there are 'clusters' of changes
+        ''' 
+        self.buffered_boundaries = np.zeros(len(self.boundaries))
+        breakpoint()
+        i = 0
+        count = 0
+        sum = 0
 
+        while i < len(self.boundaries) - 1 :
+            # check to make sure all are being evaluated
+            #print(list[i])
+
+            diff = abs(self.boundaries[i] - self.boundaries[i+1])
+            #print(diff)
+            if diff > buffer :
+                if count != 0 :
+                    count += 1
+                    sum += self.boundaries[i]
+                    #print(sum/count)
+                    self.buffered_boundaries[i] = sum/count
+                else:
+                    self.buffered_boundaries[i] = self.boundaries[i]
+
+                count = 0
+                sum = 0
+                i += 1
+            else : 
+                count += 1
+                sum += self.boundaries[i]
+                i += 1
+                if count == len(self.boundaries)-1:
+                    self.buffered_boundaries[i] = sum/count
+                    #print("check")
+        
 
 class Intensity(Contour):
     def __init__(self, minimum_pitch=100, time_step: float=None, subtract_mean:bool= True):
@@ -272,6 +305,10 @@ class Syllable(parselmouth.Sound):
         wiener_entropy.get_we_contour(self.sound)
         self.wiener_entropy = wiener_entropy 
 
+        segmentation = SegmentBoundaries()
+        segmentation.get_segment_boundaries(self.sound)
+        self.segmentation = segmentation
+
     def update_intensity(self, minimum_pitch = None, time_step = None, subtract_mean = None ):
         if minimum_pitch:
             self.intensity.minimum_pitch = minimum_pitch
@@ -308,7 +345,8 @@ class Syllable(parselmouth.Sound):
 
         self.f0.get_f0_contour(self.sound)
     
-    def update_wiener_entropy(self, time_step = None, window_size = None, min_freq = None, max_freq = None):
+    def update_wiener_entropy(self, time_step = None, window_size = None, min_freq = None, 
+            max_freq = None):
         if time_step:
             self.wiener_entropy.time_step = time_step
         if window_size:
@@ -320,9 +358,23 @@ class Syllable(parselmouth.Sound):
 
         self.wiener_entropy.get_we_contour(self.sound)
 
-    def segment_syllable(self):
-        n_data = 10
-        self.xdata = [random.uniform(0, self.duration) for i in range(n_data)]
+    def update_segmentation(self, amp_threshold = None, f0_threshold = None, we_threshold = None,
+            correlated_threshold = None, boundary_buffer = None, window_size = None):
+        if amp_threshold:
+            self.segmentation.amp_threshold = amp_threshold
+        if f0_threshold:
+            self.segmentation.f0_threshold = f0_threshold
+        if we_threshold:
+            self.segmentation.we_threshold = we_threshold
+        if correlated_threshold:
+            self.segmentation.correlated_threshold = correlated_threshold
+        if boundary_buffer:
+            self.segmentation.boundary_buffer = boundary_buffer
+        if window_size:
+            self.segmentation.window_size = window_size
+        #n_data = 10
+        #self.xdata = [random.uniform(0, self.duration) for i in range(n_data)]
+        self.segmentation.get_segment_boundaries(self.sound)
 
     def draw_spectrogram(self, canvas_axes, dynamic_range=70):
         '''
@@ -394,8 +446,8 @@ class Syllable(parselmouth.Sound):
         canvas_axes.set_ylabel("Wiener Entropy")
 
     def draw_segments(self, canvas_axes):
-        self.segment_syllable()
-        canvas_axes.axes.contour_ax.vlines(x = self.xdata, ymin = 0, ymax = 10000, colors= 'r')
+        canvas_axes.grid(False)
+        canvas_axes.axes.contour_ax.vlines(x = self.segmentation.boundaries, ymin = 0, ymax = 10000, colors= 'r')
 
 if __name__ == '__main__':
     syllable = Syllable('./examples/budgie_single.wav')
@@ -411,7 +463,12 @@ if __name__ == '__main__':
     syllable.update_f0(pitch_floor = 600)
     print(syllable.f0.contour)
     print(syllable.f0.time)
-    '''
+    
     print(syllable.wiener_entropy.contour)
     print(syllable.wiener_entropy.time)
- 
+    '''
+
+    syllable.f0.threshold_detection(5)
+    print(syllable.f0.boundaries)
+    syllable.f0.buffer_check(0.005)
+    print(syllable.f0.buffered_boundaries)

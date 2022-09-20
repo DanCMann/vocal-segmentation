@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from scripts.syllable import Syllable
+from scripts.utils import DoubleSlider
 
 TABROWS = 9
 TABCOLS = 5
@@ -116,6 +117,12 @@ class TabStruct(QtWidgets.QWidget):
                    self.update_spectrogram(self.canvas)
                else:
                    print(self.syllable.wiener_entropy.error)
+            if self.contour_type == "seg":
+                self.syllable.update_segmentation(**kwargs)
+                if not self.syllable.segmentation.error:
+                    self.update_spectrogram(self.canvas)
+                else:
+                    print(self.syllable.segmentation.error)
 
     def load_sound(self, filename = "./examples/budgie_single.wav"):
         #self.filename = self.filename_text.text()
@@ -370,18 +377,31 @@ class SegTab(TabStruct):
     def define_widgets(self):
         self.segment_button = QtWidgets.QPushButton("Segment")
         
+        self.buffer_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.buffer_slider.setMinimum(0)
+        self.buffer_slider.setMaximum(1)
+        self.buffer_slider.setInterval(0.01)
+        self.buffer_slider.setValue(0.05)
+        self.buffer_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.buffer_slider.setTickInterval(0.01)
+
         super().define_widgets()
 
     def click_connections(self):
         #self.plot_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
         #self.update_button.clicked.connect(self.update_plot)
         self.segment_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
+        self.buffer_slider.valueChanged.connect(lambda: self.change_contour(boundary_buffer = self.buffer_slider.value()))
         super().click_connections()
 
     def add_widgets(self):
         #self.grid.addWidget(self.update_button, 0, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.buffer_slider, 1, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         super().add_widgets()
-
+    
+    def change_segmentation(self):
+        print("check")
+        
 if __name__ == '__main__':
     pass
