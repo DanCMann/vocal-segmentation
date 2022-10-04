@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 from scripts.syllable import Syllable
+from scripts.contours import *
 from scripts.utils import DoubleSlider
 
 TABROWS = 9
@@ -119,10 +120,10 @@ class TabStruct(QtWidgets.QWidget):
                    print(self.syllable.wiener_entropy.error)
             if self.contour_type == "seg":
                 self.syllable.update_segmentation(**kwargs)
-                if not self.syllable.segmentation.error:
+                if not self.syllable.error:
                     self.update_spectrogram(self.canvas)
                 else:
-                    print(self.syllable.segmentation.error)
+                    print(self.syllable.error)
 
     def load_sound(self, filename = "./examples/budgie_single.wav"):
         #self.filename = self.filename_text.text()
@@ -377,6 +378,7 @@ class SegTab(TabStruct):
     def define_widgets(self):
         self.segment_button = QtWidgets.QPushButton("Segment")
         
+        self.buffer_label = QtWidgets.QLabel("Boundary Buffer")
         self.buffer_slider = DoubleSlider(QtCore.Qt.Vertical)
         self.buffer_slider.setMinimum(0)
         self.buffer_slider.setMaximum(1)
@@ -384,6 +386,51 @@ class SegTab(TabStruct):
         self.buffer_slider.setValue(0.05)
         self.buffer_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
         self.buffer_slider.setTickInterval(0.01)
+        
+        self.f0_threshold_label = QtWidgets.QLabel("F0 Threshold")
+        self.f0_threshold_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.f0_threshold_slider.setMinimum(0)
+        self.f0_threshold_slider.setMaximum(1)
+        self.f0_threshold_slider.setInterval(0.01)
+        self.f0_threshold_slider.setValue(0.05)
+        self.f0_threshold_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.f0_threshold_slider.setTickInterval(0.01)
+
+        self.amp_threshold_label = QtWidgets.QLabel("Amplitude Threshold")
+        self.amp_threshold_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.amp_threshold_slider.setMinimum(0)
+        self.amp_threshold_slider.setMaximum(1)
+        self.amp_threshold_slider.setInterval(0.01)
+        self.amp_threshold_slider.setValue(0.05)
+        self.amp_threshold_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.amp_threshold_slider.setTickInterval(0.01)
+
+        self.we_threshold_label = QtWidgets.QLabel("Wiener Entropy Threshold")
+        self.we_threshold_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.we_threshold_slider.setMinimum(0)
+        self.we_threshold_slider.setMaximum(1)
+        self.we_threshold_slider.setInterval(0.01)
+        self.we_threshold_slider.setValue(0.05)
+        self.we_threshold_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.we_threshold_slider.setTickInterval(0.01)
+
+        self.cor_threshold_label = QtWidgets.QLabel("Correlated Threshold")
+        self.cor_threshold_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.cor_threshold_slider.setMinimum(0)
+        self.cor_threshold_slider.setMaximum(1)
+        self.cor_threshold_slider.setInterval(0.01)
+        self.cor_threshold_slider.setValue(0.05)
+        self.cor_threshold_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.cor_threshold_slider.setTickInterval(0.01)
+
+        self.window_size_label = QtWidgets.QLabel("Window Size")
+        self.window_size_slider = DoubleSlider(QtCore.Qt.Vertical)
+        self.window_size_slider.setMinimum(0)
+        self.window_size_slider.setMaximum(1)
+        self.window_size_slider.setInterval(0.01)
+        self.window_size_slider.setValue(0.05)
+        self.window_size_slider.setTickPosition(QtWidgets.QSlider.TicksRight)
+        self.window_size_slider.setTickInterval(0.01)
 
         super().define_widgets()
 
@@ -392,12 +439,28 @@ class SegTab(TabStruct):
         #self.update_button.clicked.connect(self.update_plot)
         self.segment_button.clicked.connect(lambda: self.update_spectrogram(self.canvas))
         self.buffer_slider.valueChanged.connect(lambda: self.change_contour(boundary_buffer = self.buffer_slider.value()))
+        self.f0_threshold_slider.valueChanged.connect(lambda: self.change_contour(f0_threshold = self.f0_threshold_slider.value()))
+        self.amp_threshold_slider.valueChanged.connect(lambda: self.change_contour(amp_threshold = self.amp_threshold_slider.value()))
+        self.we_threshold_slider.valueChanged.connect(lambda: self.change_contour(we_threshold = self.we_threshold_slider.value()))
+        self.cor_threshold_slider.valueChanged.connect(lambda: self.change_contour(correlated_threshold = self.cor_threshold_slider.value()))
+        self.window_size_slider.valueChanged.connect(lambda: self.change_contour(window_size = self.window_size_slider.value()))
         super().click_connections()
 
     def add_widgets(self):
         #self.grid.addWidget(self.update_button, 0, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
         self.grid.addWidget(self.segment_button, 2, 2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-        self.grid.addWidget(self.buffer_slider, 1, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.buffer_label, 1, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.buffer_slider, 1, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_threshold_label, 2, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.f0_threshold_slider, 2, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_threshold_label, 3, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.amp_threshold_slider, 3, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.we_threshold_label, 4, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.we_threshold_slider, 4, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.cor_threshold_label, 5, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.cor_threshold_slider, 5, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.window_size_label, 6, self.cols-2, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.grid.addWidget(self.window_size_slider, 6, self.cols-1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
         super().add_widgets()
     
     def change_segmentation(self):
